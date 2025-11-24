@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* 调色板：战术终端风格 */
+            --bg-dark: #050505;
+            --c-red: #ff3333;    /* BPM */
+            --c-cyan: #00ffff;   /* O2 */
+            --c-purple: #bd93f9; /* SAN */
+            --c-orange: #ffb86c; /* Hunger */
+            --c-blue: #8be9fd;   /* Thirst */
+            --c-amber: #ffb000;  /* Temp */
+            --glass: rgba(10, 15, 20, 0.9);
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; user-select: none; }
+        
+        body { 
+            background-color: #000; 
+            color: #e6edf3; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            height: 100vh; 
+            margin: 0; 
+            overflow: hidden; 
+            display: flex; flex-direction: column;
+            transition: filter 2s ease; /* 用于缺氧模糊过渡 */
+        }
+
+        /* === 视觉特效层 === */
+        .fog-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, #111 0%, #000 100%); z-index: -2;
+        }
+        .scanlines {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 50;
+        }
+        .vignette {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 55%, rgba(0,0,0,1) 120%);
+            pointer-events: none; z-index: 40; transition: box-shadow 0.5s;
+        }
+        /* 濒死/低SAN时的红光脉冲 */
+        .vignette.danger { animation: redPulse 1.5s infinite; }
+        @keyframes redPulse { 0%,100% { box-shadow: inset 0 0 0 red; } 50% { box-shadow: inset 0 0 40px rgba(255,0,0,0.3); } }
+
+        /* === 顶部 HUD === */
+        .top-hud {
+            padding: 12px 15px; display: flex; justify-content: space-between;
+            font-family: var(--font-mono); font-size: 0.75rem; color: #58a6ff;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 10;
+            border-bottom: 1px solid #222;
+        }
+
+        /* === 叙事流 === */
+        .log-container {
+            flex: 1; padding: 20px; overflow-y: auto; scroll-behavior: smooth;
+            mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+            z-index: 10; text-shadow: 0 0 2px rgba(255,255,255,0.2);
+        }
+        .log-container::-webkit-scrollbar { display: none; }
+        .entry { margin-bottom: 12px; line-height: 1.5; font-size: 0.9rem; opacity: 0.9; }
+        .sys-text { color: #666; font-family: var(--font-mono); font-size: 0.7rem; margin-bottom: 8px; border-left: 2px solid #333; padding-left: 6px; }
+        .danger-text { color: var(--c-red); font-weight: bold; }
+        .cursor { display: inline-block; width: 6px; height: 14px; background: var(--c-cyan); animation: blink 1s infinite; vertical-align: middle; }
+
+        /* === 底部仪表盘 (核心修改) === */
+        .dashboard {
+            background: var(--glass);
+            border-top: 1px solid #333;
+            padding: 12px; z-index: 20;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+
+        /* 状态网格：2行3列 */
+        .status-grid {
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr; 
+            grid-template-rows: auto auto;
+            gap: 8px;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px; padding: 4px 6px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+
+        .stat-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            font-size: 0.6rem; color: #888; margin-bottom: 3px; font-family: var(--font-mono);
+        }
+        .stat-val { font-weight: bold; color: #fff; }
+
+        /* 进度条 */
+        .bar-track { width: 100%; height: 3px; background: #222; border-radius: 1px; overflow: hidden; }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.3s; }
+
+        /* 颜色定义 */
+        .c-bpm { color: var(--c-red); } .bg-bpm { background: var(--c-red); box-shadow: 0 0 5px var(--c-red); }
+        .c-o2 { color: var(--c-cyan); } .bg-o2 { background: var(--c-cyan); box-shadow: 0 0 5px var(--c-cyan); }
+        .c-san { color: var(--c-purple); } .bg-san { background: var(--c-purple); }
+        .c-nrg { color: var(--c-orange); } .bg-nrg { background: var(--c-orange); }
+        .c-h2o { color: var(--c-blue); } .bg-h2o { background: var(--c-blue); }
+        .c-tmp { color: var(--c-amber); } .bg-tmp { background: var(--c-amber); }
+
+        /* 操作区 */
+        .control-row { display: flex; gap: 12px; height: 60px; }
+        
+        /* 地图 */
+        .map-box {
+            width: 60px; height: 60px; flex-shrink: 0;
+            border-radius: 50%; border: 2px solid #444; background: #000;
+            position: relative; overflow: hidden;
+        }
+        canvas { width: 100%; height: 100%; filter: contrast(1.2); }
+        .glitch-layer {
+            position: absolute; inset: 0; background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IndoaXRlIi8+PC9zdmc+');
+            opacity: 0; pointer-events: none; mix-blend-mode: overlay;
+        }
+
+        /* 按钮 */
+        .btn-act {
+            flex: 1; background: #e6edf3; color: #000; border: none; border-radius: 6px;
+            font-size: 1rem; font-weight: 800; letter-spacing: 2px; cursor: pointer;
+            box-shadow: 0 0 10px rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .btn-act:active { background: #fff; transform: scale(0.98); }
+        .step-cost { font-size: 0.6rem; font-weight: normal; opacity: 0.6; margin-top: 2px; }
+
+        /* 缺氧模糊滤镜类 */
+        .hypoxia-blur { filter: blur(2px) contrast(1.5); }
+        
+    </style>
+</head>
+<body>
+
+    <div class="fog-bg"></div>
+    <div class="scanlines"></div>
+    <div class="vignette" id="vignette"></div>
+
+    <div class="top-hud">
+        <span><i class="fas fa-mountain"></i> 5,200m (死亡地带)</span>
+        <span id="weatherState"><i class="far fa-snowflake"></i> 暴雪</span>
+    </div>
+
+    <div class="log-container" id="logBox">
+        <div class="sys-text">> SENSORS_INIT... OK<br>> CRITICAL: OXYGEN_LEVEL_LOW</div>
+        <div class="entry">每一步都像踩在棉花上。你的肺部在尖叫，这里是神明居住的禁区，也是凡人的墓地。</div>
+        <span class="cursor"></span>
+    </div>
+
+    <div class="dashboard">
+        
+        <div class="status-grid">
+            <div class="stat-item">
+                <div class="stat-header">
+                    <span>BPM</span> <i class="fas fa-heartbeat c-bpm"></i>
+                </div>
+                <div class="bar-track"><div class="bar-fill bg-bpm" id="barBpm" style="width: 80%;"></div></div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-header">
+                    <span>SpO₂</span> <i class="fas fa-lungs c-o2"></i>
+                </div>
+                <div class="bar-track"><div class="bar-fill bg-o2" id="barO2" style="width: 70%;"></div></div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-header">
+                    <span>SAN</span> <i class="fas fa-brain c-san"></i>
+                </div>
+                <div class="bar-track"><div class="bar-fill bg-san" id="barSan" style="width: 50%;"></div></div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-header">
+                    <span>NRG</span> <span class="stat-val c-nrg" id="valNrg">60%</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill bg-nrg" id="barNrg" style="width: 60%;"></div></div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-header">
+                    <span>H₂O</span> <span class="stat-val c-h2o" id="valH2o">40%</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill bg-h2o" id="barH2o" style="width: 40%;"></div></div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-header">
+                    <span>TMP</span> <span class="stat-val c-tmp" id="valTmp">35°</span>
+                </div>
+                <div class="bar-track"><div class="bar-fill bg-tmp" id="barTmp" style="width: 30%;"></div></div>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <div class="map-box" onclick="toggleMapMode()">
+                <canvas id="mapCanvas" width="120" height="120"></canvas>
+                <div class="glitch-layer" id="mapGlitch"></div>
+            </div>
+            
+            <button class="btn-act" onclick="takeStep()">
+                前 进
+                <span class="step-cost">消耗 120 步</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // === 1. 打字机 ===
+        const logBox = document.getElementById('logBox');
+        const cursor = document.querySelector('.cursor');
+
+        function typeWriter(text, danger=false) {
+            cursor.remove();
+            const div = document.createElement('div');
+            div.className = danger ? 'entry danger-text' : 'entry';
+            logBox.appendChild(div);
+            logBox.appendChild(cursor);
+
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    div.innerHTML += text.charAt(i);
+                    i++;
+                    logBox.scrollTop = logBox.scrollHeight;
+                    setTimeout(type, 20);
+                }
+            }
+            type();
+        }
+
+        // === 2. 状态管理 ===
+        // 初始数值
+        let stats = {
+            bpm: 110,  // 心率 (高=危险)
+            spo2: 75,  // 血氧 (低=危险, <60触发幻觉/模糊)
+            san: 50,   // 理智
+            nrg: 80,   // 饥饿
+            h2o: 60,   // 口渴
+            tmp: 36.5  // 体温
+        };
+
+        function updateUI() {
+            // 更新进度条宽度
+            // 注意：BPM越高越危险，所以条越满越不好。O2越低越危险。
+            // 为了视觉统一，我们把BPM映射为：越高条越长(红色警告)。O2: 越高条越长(蓝色健康)。
+            
+            const bpmPercent = Math.min((stats.bpm - 40) / 1.6, 100); // 40-200映射到0-100
+            document.getElementById('barBpm').style.width = bpmPercent + '%';
+            
+            document.getElementById('barO2').style.width = stats.spo2 + '%';
+            document.getElementById('barSan').style.width = stats.san + '%';
+            
+            document.getElementById('barNrg').style.width = stats.nrg + '%';
+            document.getElementById('valNrg').innerText = stats.nrg + '%';
+            
+            document.getElementById('barH2o').style.width = stats.h2o + '%';
+            document.getElementById('valH2o').innerText = stats.h2o + '%';
+            
+            document.getElementById('barTmp').style.width = ((stats.tmp - 30) * 10) + '%'; // 30-40度映射
+            document.getElementById('valTmp').innerText = stats.tmp.toFixed(1) + '°';
+
+            // === 视觉反馈逻辑 ===
+            
+            // 1. 缺氧模糊 (Hypoxia Blur)
+            if (stats.spo2 < 65) {
+                document.body.classList.add('hypoxia-blur');
+                typeWriter(">>> 警告：脑部供氧不足，视线开始模糊...", true);
+            } else {
+                document.body.classList.remove('hypoxia-blur');
+            }
+
+            // 2. 濒死暗角
+            const vignette = document.getElementById('vignette');
+            if (stats.bpm > 160 || stats.tmp < 34) {
+                vignette.classList.add('danger');
+            } else {
+                vignette.classList.remove('danger');
+            }
+
+            // 3. 地图故障 (低SAN)
+            const mapGlitch = document.getElementById('mapGlitch');
+            if (stats.san < 30) {
+                mapGlitch.style.opacity = Math.random() * 0.8;
+                isGlitching = true;
+            } else {
+                mapGlitch.style.opacity = 0;
+                isGlitching = false;
+            }
+        }
+
+        // === 3. 游戏逻辑 ===
+        function takeStep() {
+            // 模拟数值变化
+            stats.nrg -= 5;
+            stats.h2o -= 8;
+            stats.spo2 -= 2; // 随海拔升高降低
+            stats.bpm += 5;  // 运动心率上升
+            
+            // 随机恢复一点SAN (或者降低)
+            stats.san += (Math.random() - 0.6) * 10;
+            if(stats.san < 0) stats.san = 0;
+            if(stats.spo2 < 50) stats.spo2 = 50; // 最低值
+
+            // 随机生成文案
+            const msgs = [
+                "喉咙干得像着了火 (H₂O 低)。",
+                "肚子发出雷鸣般的响声 (NRG 低)。",
+                "刚才那个影子...是雪豹吗？ (SAN 检定)",
+                "海拔上升。你感到头痛欲裂 (SpO₂ 下降)。"
+            ];
+            const msg = msgs[Math.floor(Math.random() * msgs.length)];
+            typeWriter(msg);
+
+            updateUI();
+        }
+
+        // === 4. 地图绘制 (Canvas) ===
+        const cvs = document.getElementById('mapCanvas');
+        const ctx = cvs.getContext('2d');
+        let frame = 0;
+        let isGlitching = false;
+
+        function drawMap() {
+            ctx.fillStyle = "#050505";
+            ctx.fillRect(0,0,120,120);
+
+            // 等高线
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(60, 60, 20, 0, Math.PI*2);
+            ctx.arc(60, 60, 40, 0, Math.PI*2);
+            ctx.stroke();
+
+            // 路径
+            ctx.save();
+            let shake = isGlitching ? (Math.random()-0.5)*4 : 0;
+            ctx.translate(shake, shake);
+            ctx.beginPath();
+            ctx.strokeStyle = isGlitching ? "#ff3333" : "#58a6ff";
+            ctx.lineWidth = 2;
+            ctx.moveTo(60, 120);
+            ctx.bezierCurveTo(30, 80, 90, 40, 60, 0);
+            ctx.stroke();
+            ctx.restore();
+
+            // 玩家点
+            let pY = 120 - (frame % 120);
+            ctx.fillStyle = "#fff";
+            ctx.beginPath();
+            ctx.arc(60, 60, 3, 0, Math.PI*2);
+            ctx.fill();
+
+            frame++;
+            requestAnimationFrame(drawMap);
+        }
+        drawMap();
+        updateUI(); // Init
+
+    </script>
+</body>
+</html>

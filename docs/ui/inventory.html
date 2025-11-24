@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif; padding: 20px; }
+        h2 { font-size: 1.5rem; margin-bottom: 20px; }
+        
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
+        
+        /* 负重条 */
+        .weight-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: #8b949e; margin-bottom: 5px; }
+        .weight-track { height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
+        .weight-fill { height: 100%; width: 85%; background: #f85149; } /* 红色代表超重 */
+        
+        /* 物品网格 */
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .slot {
+            aspect-ratio: 1; background: #21262d; border: 1px solid #30363d; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; position: relative;
+            font-size: 1.2rem; color: #555;
+        }
+        .slot.item { background: #161b22; color: #e6edf3; border-color: #6e7681; cursor: pointer; }
+        .count { position: absolute; bottom: 2px; right: 4px; font-size: 0.6rem; font-family: 'Courier New'; color: #8b949e; }
+        
+        /* 技能列表 */
+        .skill-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #30363d; font-size: 0.9rem; }
+        .skill-val { font-family: 'Courier New'; color: #58a6ff; }
+    </style>
+</head>
+<body>
+    <h2>行囊</h2>
+
+    <div class="card">
+        <div class="weight-header">
+            <span>负重 (重装模式)</span>
+            <span style="color:#f85149">18.5 / 20 kg</span>
+        </div>
+        <div class="weight-track">
+            <div class="weight-fill"></div>
+        </div>
+        <div style="font-size:0.7rem; color:#f85149; margin-top:5px; text-align:right;">
+            <i class="fas fa-exclamation-triangle"></i> 体力消耗 +30%
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="slot item" onclick="alert('指南针：\n防止在大雾中迷路。')"><i class="fas fa-compass"></i></div>
+        <div class="slot item"><i class="fas fa-lungs" style="color:#58a6ff"></i><span class="count">x1</span></div>
+        <div class="slot item"><i class="fas fa-bread-slice" style="color:#d2a679"></i><span class="count">x3</span></div>
+        <div class="slot item"><i class="fas fa-fire-alt" style="color:#f85149"></i></div>
+        <div class="slot item"><i class="fas fa-snowflake" style="color:#fff"></i><span class="count">冰爪</span></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+        <div class="slot"></div>
+    </div>
+
+    <h3 style="margin-top:30px; font-size:1rem;">生存技能</h3>
+    <div class="card">
+        <div class="skill-row">
+            <span>定向 (Navigation)</span>
+            <span class="skill-val">Lv.3</span>
+        </div>
+        <div class="skill-row">
+            <span>生火 (Fire Making)</span>
+            <span class="skill-val">Lv.2</span>
+        </div>
+        <div class="skill-row">
+            <span>急救 (First Aid)</span>
+            <span class="skill-val">Lv.1</span>
+        </div>
+    </div>
+</body>
+</html>

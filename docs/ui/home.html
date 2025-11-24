@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* 共享基础样式 */
+        body { background-color: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif; padding: 20px; overflow-y: auto; }
+        h2 { font-size: 1.5rem; letter-spacing: 1px; margin-bottom: 5px;}
+        .subtitle { color: #8b949e; font-size: 0.8rem; font-family: 'Courier New', monospace; margin-bottom: 20px; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        
+        /* 季节横幅 */
+        .season-banner {
+            background: linear-gradient(135deg, #1f293a 0%, #161b22 100%);
+            border-left: 4px solid #fff; /* 默认 */
+            padding: 15px; border-radius: 8px; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        /* 冬季样式 (方案 B) */
+        .season-winter { border-color: #a8d1ff; box-shadow: 0 0 15px rgba(168, 209, 255, 0.1); }
+        .season-label { font-size: 1.2rem; font-weight: bold; }
+        .season-bonus { font-size: 0.7rem; color: #a8d1ff; background: rgba(168, 209, 255, 0.1); padding: 2px 6px; border-radius: 4px; margin-top: 5px; display: inline-block;}
+
+        /* 步数环 */
+        .step-ring {
+            width: 160px; height: 160px; border-radius: 50%;
+            border: 8px solid #21262d; border-top: 8px solid #a8d1ff; /* 冬季色 */
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            margin: 0 auto 20px auto;
+            box-shadow: 0 0 20px rgba(168, 209, 255, 0.2);
+        }
+        .step-num { font-size: 2rem; font-weight: 800; font-family: 'Courier New'; }
+        
+        .btn-action {
+            width: 100%; padding: 12px; background: #2ea043; color: #fff; border: none; border-radius: 20px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .rate-tag { background: rgba(0,0,0,0.2); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h2>大本营</h2>
+    <div class="subtitle">ID: EXPLORER_07</div>
+
+    <div class="season-banner season-winter">
+        <div>
+            <div class="season-label"><i class="far fa-snowflake"></i> 凛冬之怒</div>
+            <div style="font-size:0.8rem; color:#8b949e;">第 4 周 | 气温 -15°C</div>
+            <div class="season-bonus">步数汇率 x1.5 UP</div>
+        </div>
+        <div style="text-align:right; font-size:0.7rem; color:#8b949e;">
+            距离春季<br>还有 3 天
+        </div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+        <div class="step-ring">
+            <span class="step-num">8,402</span>
+            <span style="font-size:0.7rem; color:#8b949e;">今日步数</span>
+        </div>
+        
+        <p style="font-size:0.8rem; color:#8b949e; margin-bottom:15px;">
+            逆向激励生效中：当前环境极其恶劣，转化收益大幅提升。
+        </p>
+
+        <button class="btn-action" onclick="alert('转化成功！\n获得：氧气x2 (含季节加成)')">
+            <i class="fas fa-sync-alt"></i> 同步并转化
+            <span class="rate-tag">Rate 1.5x</span>
+        </button>
+    </div>
+
+    <div class="card">
+        <h3 style="font-size:1rem; margin-bottom:10px;">技能熟练度</h3>
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:0.8rem;">
+            <span>生火 (Fire)</span>
+            <span>Lv.2</span>
+        </div>
+        <div style="width:100%; height:4px; background:#21262d; border-radius:2px;"><div style="width:40%; height:100%; background:#e6edf3;"></div></div>
+    </div>
+</body>
+</html>

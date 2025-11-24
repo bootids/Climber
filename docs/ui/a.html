@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --c-nav: #00ffff;   /* 勘探者 Cyan */
+            --c-asc: #ffb000;   /* 苦行僧 Amber */
+            --c-obs: #bd93f9;   /* 观测者 Purple */
+            --glass: rgba(22, 27, 34, 0.9);
+            --border: #30363d;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; user-select: none; }
+        body { 
+            background-color: #000; color: #e6edf3; 
+            font-family: -apple-system, sans-serif; 
+            padding: 20px; padding-bottom: 80px;
+        }
+
+        h2 { font-size: 1.5rem; margin-bottom: 10px; letter-spacing: 1px; }
+
+        /* === 1. 顶部资源栏 === */
+        .header-stats {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+        }
+        .gene-counter {
+            text-align: right;
+        }
+        .gene-val {
+            font-family: var(--font-mono); font-size: 1.5rem; font-weight: bold; color: #4af626;
+            text-shadow: 0 0 10px rgba(74, 246, 38, 0.3);
+        }
+        .gene-label { font-size: 0.7rem; color: #8b949e; letter-spacing: 1px; }
+
+        /* === 2. 负重与背包 (保留 compact 样式) === */
+        .card { background: #161b22; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 20px; }
+        
+        .weight-track { height: 6px; background: #21262d; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+        .weight-fill { height: 100%; background: #f85149; width: 72%; }
+
+        .inv-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
+        .slot { 
+            aspect-ratio: 1; background: #0d1117; border: 1px solid #30363d; border-radius: 4px; 
+            display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #555; position: relative;
+        }
+        .slot.has-item { border-color: #6e7681; color: #e6edf3; background: #21262d; cursor: pointer; }
+        .count { position: absolute; bottom: 1px; right: 2px; font-size: 0.5rem; color: #8b949e; font-family: var(--font-mono); }
+
+        /* === 3. 基因技能树 (核心更新) === */
+        .skill-section-title {
+            font-size: 0.9rem; color: #8b949e; margin-bottom: 15px; border-left: 3px solid #fff; padding-left: 10px;
+            font-family: var(--font-mono); text-transform: uppercase;
+        }
+
+        .branch-card {
+            background: rgba(13, 17, 23, 0.8); border: 1px solid #333; border-radius: 8px;
+            padding: 15px; margin-bottom: 15px; position: relative; overflow: hidden;
+        }
+        
+        /* 分支背景装饰 */
+        .branch-bg-icon {
+            position: absolute; right: -10px; bottom: -10px; font-size: 4rem; opacity: 0.05; pointer-events: none;
+        }
+
+        /* 分支标题 */
+        .branch-header { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+        .branch-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 4px; color: #000; font-size: 0.8rem;}
+        .branch-name { font-weight: bold; font-size: 0.9rem; letter-spacing: 1px; }
+        .branch-desc { font-size: 0.7rem; color: #8b949e; margin-left: auto; font-family: var(--font-mono); }
+
+        /* 节点连线容器 */
+        .tree-container {
+            display: flex; align-items: center; justify-content: space-between; position: relative; padding: 0 10px;
+        }
+        /* 连线 */
+        .tree-line {
+            position: absolute; top: 50%; left: 20px; right: 20px; height: 2px; background: #30363d; z-index: 0;
+            transform: translateY(-50%);
+        }
+        
+        /* 技能节点 */
+        .node {
+            width: 40px; height: 40px; border-radius: 50%; 
+            background: #0d1117; border: 2px solid #333;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1; position: relative; cursor: pointer;
+            transition: all 0.3s;
+        }
+        .node-label {
+            position: absolute; bottom: -20px; width: 80px; text-align: center;
+            font-size: 0.6rem; color: #555; font-family: var(--font-mono);
+        }
+        .node i { font-size: 0.9rem; color: #333; }
+
+        /* 状态样式：A. 勘探者 (Cyan) */
+        .nav-theme .branch-icon { background: var(--c-nav); }
+        .nav-theme .branch-name { color: var(--c-nav); }
+        .nav-theme .node.active { border-color: var(--c-nav); box-shadow: 0 0 10px rgba(0, 255, 255, 0.3); background: #0d1117; }
+        .nav-theme .node.active i { color: var(--c-nav); }
+        .nav-theme .node.unlocked { background: var(--c-nav); border-color: var(--c-nav); }
+        .nav-theme .node.unlocked i { color: #000; }
+        .nav-theme .node.active .node-label { color: var(--c-nav); }
+
+        /* 状态样式：B. 苦行僧 (Amber) */
+        .asc-theme .branch-icon { background: var(--c-asc); }
+        .asc-theme .branch-name { color: var(--c-asc); }
+        .asc-theme .node.active { border-color: var(--c-asc); box-shadow: 0 0 10px rgba(255, 176, 0, 0.3); }
+        .asc-theme .node.active i { color: var(--c-asc); }
+        .asc-theme .node.unlocked { background: var(--c-asc); border-color: var(--c-asc); }
+        .asc-theme .node.unlocked i { color: #000; }
+        .asc-theme .node.active .node-label { color: var(--c-asc); }
+
+        /* 状态样式：C. 观测者 (Purple) */
+        .obs-theme .branch-icon { background: var(--c-obs); }
+        .obs-theme .branch-name { color: var(--c-obs); }
+        .obs-theme .node.active { border-color: var(--c-obs); box-shadow: 0 0 10px rgba(189, 147, 249, 0.3); }
+        .obs-theme .node.active i { color: var(--c-obs); }
+        .obs-theme .node.unlocked { background: var(--c-obs); border-color: var(--c-obs); }
+        .obs-theme .node.unlocked i { color: #000; }
+        .obs-theme .node.active .node-label { color: var(--c-obs); }
+
+    </style>
+</head>
+<body>
+
+    <div class="header-stats">
+        <div>
+            <h2>行囊</h2>
+            <div style="font-size:0.8rem; color:#8b949e;">Lv.5 资深登山者</div>
+        </div>
+        <div class="gene-counter">
+            <div class="gene-val" id="gpVal">3</div>
+            <div class="gene-label">GENE POINTS</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#8b949e;">
+            <span>负重 18.5/20kg</span>
+            <span style="color:#f85149">超重警告</span>
+        </div>
+        <div class="weight-track"><div class="weight-fill"></div></div>
+        
+        <div class="inv-grid">
+            <div class="slot has-item"><i class="fas fa-compass"></i></div>
+            <div class="slot has-item"><i class="fas fa-lungs"></i><span class="count">2</span></div>
+            <div class="slot has-item"><i class="fas fa-bread-slice"></i><span class="count">3</span></div>
+            <div class="slot has-item"><i class="fas fa-fire-alt"></i></div>
+            <div class="slot has-item"><i class="fas fa-snowflake"></i></div>
+        </div>
+    </div>
+
+    <div class="skill-section-title">基因序列 (Skill Tree)</div>
+
+    <div class="branch-card nav-theme">
+        <i class="fas fa-map-marked-alt branch-bg-icon"></i>
+        <div class="branch-header">
+            <div class="branch-icon"><i class="fas fa-location-arrow"></i></div>
+            <div class="branch-name">勘探者</div>
+            <div class="branch-desc">对抗迷路</div>
+        </div>
+        <div class="tree-container">
+            <div class="tree-line"></div>
+            <div class="node unlocked" onclick="showSkill('nav', 1)">
+                <i class="fas fa-drafting-compass"></i>
+                <div class="node-label">直觉</div>
+            </div>
+            <div class="node active" onclick="showSkill('nav', 2)">
+                <i class="fas fa-star"></i>
+                <div class="node-label">星辰</div>
+            </div>
+            <div class="node" onclick="showSkill('nav', 3)">
+                <i class="fas fa-database"></i>
+                <div class="node-label">缓存</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="branch-card asc-theme">
+        <i class="fas fa-walking branch-bg-icon"></i>
+        <div class="branch-header">
+            <div class="branch-icon"><i class="fas fa-fist-raised"></i></div>
+            <div class="branch-name">苦行僧</div>
+            <div class="branch-desc">对抗环境</div>
+        </div>
+        <div class="tree-container">
+            <div class="tree-line"></div>
+            <div class="node unlocked" onclick="showSkill('asc', 1)">
+                <i class="fas fa-tint"></i>
+                <div class="node-label">骆驼胃</div>
+            </div>
+            <div class="node unlocked" onclick="showSkill('asc', 2)">
+                <i class="fas fa-bed"></i>
+                <div class="node-label">休眠</div>
+            </div>
+            <div class="node active" onclick="showSkill('asc', 3)">
+                <i class="fas fa-heartbeat"></i>
+                <div class="node-label">肾上腺</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="branch-card obs-theme">
+        <i class="fas fa-eye branch-bg-icon"></i>
+        <div class="branch-header">
+            <div class="branch-icon"><i class="fas fa-brain"></i></div>
+            <div class="branch-name">观测者</div>
+            <div class="branch-desc">对抗幻觉</div>
+        </div>
+        <div class="tree-container">
+            <div class="tree-line"></div>
+            <div class="node active" onclick="showSkill('obs', 1)">
+                <i class="fas fa-anchor"></i>
+                <div class="node-label">锚点</div>
+            </div>
+            <div class="node" onclick="showSkill('obs', 2)">
+                <i class="fas fa-volume-mute"></i>
+                <div class="node-label">静默</div>
+            </div>
+            <div class="node" onclick="showSkill('obs', 3)">
+                <i class="fas fa-eye-slash"></i>
+                <div class="node-label">真实</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据
+        let gp = 3;
+        const skills = {
+            nav: {
+                1: { name: "直觉修正", desc: "减少“矢量解耦”发生时的最大偏差角 (±30° -> ±15°)。", cost: 1 },
+                2: { name: "星辰定位", desc: "即使在黑夜，若无暴风雪，地图中心线不会完全消失。", cost: 2 },
+                3: { name: "离线缓存", desc: "死亡时，保留 50% 已探索地图的战争迷雾状态给下一代。", cost: 3 }
+            },
+            asc: {
+                1: { name: "骆驼胃", desc: "饮水效率 +20%，抗脱水时间延长。", cost: 1 },
+                2: { name: "低温休眠", desc: "停止移动时，体温下降速度减缓 40%。", cost: 2 },
+                3: { name: "肾上腺素泵", desc: "生命值 < 10% 时，获得 30秒 无限体力爆发。", cost: 3 }
+            },
+            obs: {
+                1: { name: "逻辑锚点", desc: "能够识别出 30% 的“幽灵分支”（红色闪烁标记）。", cost: 1 },
+                2: { name: "静默心流", desc: "SAN 值 < 20% 时，不再听到虚假的求救声。", cost: 2 },
+                3: { name: "真实之眼", desc: "主动技能。瞬间清除屏幕上所有的幻觉渲染 (CD: 24h)。", cost: 3 }
+            }
+        };
+
+        function showSkill(branch, tier) {
+            const data = skills[branch][tier];
+            // 简单的交互模拟
+            let confirmMsg = `【${data.name}】\n\n${data.desc}\n\n升级消耗: ${data.cost} GP`;
+            
+            // 这里为了演示，假设前端已经渲染了状态（unlocked/active/locked）
+            // 实际开发需要根据用户数据动态渲染class
+            
+            if(confirm(confirmMsg)) {
+                if(gp >= data.cost) {
+                    gp -= data.cost;
+                    document.getElementById('gpVal').innerText = gp;
+                    alert("升级成功！");
+                    // 实际逻辑：更新样式为 unlocked，解锁下一级
+                } else {
+                    alert("基因点数不足！");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
