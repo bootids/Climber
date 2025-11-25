@@ -11,6 +11,7 @@
             --border-color: #30363d;
             --accent: #58a6ff;
             --text-sub: #8b949e;
+            --warning-red: #ff3333;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background-color: #000; height: 100vh; display: flex; justify-content: center; overflow: hidden; font-family: -apple-system, sans-serif; }
@@ -58,19 +59,58 @@
             border: 4px solid var(--bg-color);
             box-shadow: 0 0 10px rgba(255,255,255,0.1);
         }
+
+        /* 启动警示弹窗 */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 999;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .warning-box {
+            background: #161b22; border: 1px solid var(--warning-red);
+            padding: 25px; border-radius: 8px; text-align: center;
+            color: #e6edf3; box-shadow: 0 0 30px rgba(255,51,51,0.2);
+        }
+        .warning-icon { font-size: 3rem; color: var(--warning-red); margin-bottom: 15px; }
+        .warning-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; color: var(--warning-red); }
+        .warning-text {
+            font-size: 0.9rem; color: #8b949e; line-height: 1.5; margin-bottom: 20px;
+        }
+        .btn-agree {
+            background: var(--warning-red); color: #fff; border: none;
+            padding: 10px 30px; border-radius: 4px; font-weight: bold; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
+        
+        <!-- 启动警示 (Safety Warning) -->
+        <div class="modal-overlay" id="safetyModal">
+            <div class="warning-box">
+                <div class="warning-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="warning-title">严禁模仿</div>
+                <div class="warning-text">
+                    本游戏涉及极端环境生存模拟.<br><br>
+                    请勿在现实中模仿游戏内的危险行为.<br>
+                    请勿前往未开发的野外区域.<br>
+                    生命只有一次，没有重开.
+                </div>
+                <button class="btn-agree" onclick="closeModal()">我已知晓</button>
+            </div>
+        </div>
+
         <iframe id="content-frame" src="home.html"></iframe>
 
         <nav class="nav-bar">
             <a class="nav-item active" onclick="navigate('home.html', this)">
                 <i class="fas fa-campground"></i>
-                <span>大本营</span>
+                <span>量子营地</span>
             </a>
             <a class="nav-item" onclick="navigate('inventory.html', this)">
-                <i class="fas fa-hiking"></i>
+                <i class="fas fa-box-open"></i>
                 <span>行囊</span>
             </a>
             <a class="nav-item nav-item-play" onclick="navigate('game.html', this)">
@@ -78,27 +118,51 @@
             </a>
             <a class="nav-item" onclick="navigate('radio.html', this)">
                 <i class="fas fa-broadcast-tower"></i>
-                <span>频道</span>
+                <span>频段</span>
             </a>
-            <a class="nav-item" onclick="alert('路书系统开发中...')">
-                <i class="fas fa-book"></i>
-                <span>路书</span>
+            <a class="nav-item" onclick="alert('系统日志：\n当前版本 v1.0 Prototype')">
+                <i class="fas fa-terminal"></i>
+                <span>系统</span>
             </a>
         </nav>
     </div>
 
     <script>
         function navigate(url, el) {
-            document.getElementById('content-frame').src = url;
+            const contentFrame = document.getElementById('content-frame');
+            contentFrame.src = url;
             
-            // 更新选中状态
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            // 如果点击的是play按钮，高亮它，否则高亮点击项
-            if(el.classList.contains('nav-item-play')) {
-                // 保持中间按钮样式，或者也可以高亮
+            const navBar = document.querySelector('.nav-bar');
+            
+            if (url === 'game.html') {
+                navBar.style.display = 'none';
             } else {
-                el.classList.add('active');
+                navBar.style.display = 'flex';
             }
+
+            // 更新选中状态
+            if (el) {
+                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                if(el.classList.contains('nav-item-play')) {
+                    // 中间按钮不需要active态
+                } else {
+                    el.classList.add('active');
+                }
+            }
+        }
+
+        // 暴露给子页面调用的方法
+        window.restoreNav = function() {
+            const navBar = document.querySelector('.nav-bar');
+            navBar.style.display = 'flex';
+            // 默认切回主页
+            navigate('home.html', document.querySelector('.nav-item'));
+        };
+
+        function closeModal() {
+            const modal = document.getElementById('safetyModal');
+            modal.style.opacity = '0';
+            setTimeout(() => modal.remove(), 500);
         }
     </script>
 </body>

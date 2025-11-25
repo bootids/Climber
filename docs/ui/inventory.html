@@ -5,16 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif; padding: 20px; }
-        h2 { font-size: 1.5rem; margin-bottom: 20px; }
+        body { background-color: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif; padding: 20px; padding-bottom: 80px;}
+        h2 { font-size: 1.5rem; margin-bottom: 20px; text-transform: uppercase; }
         
         .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
         
-        /* 负重条 */
-        .weight-header { display: flex; justify-content: space-between; font-size: 0.8rem; color: #8b949e; margin-bottom: 5px; }
-        .weight-track { height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
-        .weight-fill { height: 100%; width: 85%; background: #f85149; } /* 红色代表超重 */
-        
+        /* 属性面板 */
+        .attr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; }
+        .attr-box { background: #21262d; padding: 10px; border-radius: 8px; }
+        .attr-val { font-size: 1.2rem; font-weight: bold; color: #fff; font-family: 'Courier New'; }
+        .attr-label { font-size: 0.7rem; color: #8b949e; margin-top: 5px; }
+
         /* 物品网格 */
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         .slot {
@@ -22,54 +23,92 @@
             display: flex; align-items: center; justify-content: center; position: relative;
             font-size: 1.2rem; color: #555;
         }
-        .slot.item { background: #161b22; color: #e6edf3; border-color: #6e7681; cursor: pointer; }
-        .count { position: absolute; bottom: 2px; right: 4px; font-size: 0.6rem; font-family: 'Courier New'; color: #8b949e; }
+        .slot.item { background: #161b22; color: #e6edf3; border-color: #6e7681; cursor: pointer; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .slot.active { border-color: #58a6ff; box-shadow: 0 0 5px rgba(88,166,255,0.5); }
+        .count { position: absolute; bottom: 2px; right: 4px; font-size: 0.6rem; font-family: 'Courier New'; color: #8b949e; background: rgba(0,0,0,0.6); padding: 0 2px; border-radius: 2px;}
         
         /* 技能列表 */
-        .skill-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #30363d; font-size: 0.9rem; }
-        .skill-val { font-family: 'Courier New'; color: #58a6ff; }
+        .skill-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #30363d; align-items: center; }
+        .skill-name { font-size: 0.9rem; font-weight: bold; }
+        .skill-desc { font-size: 0.7rem; color: #8b949e; }
+        .skill-val { font-family: 'Courier New'; color: #58a6ff; background: rgba(88,166,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
+
+        /* 基因天赋 */
+        .trait-tag { 
+            display: inline-block; font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; 
+            background: #238636; color: #fff; margin-right: 5px; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.2);
+        }
+        .trait-desc { font-size: 0.8rem; color: #8b949e; margin-top: 10px; font-style: italic; }
     </style>
 </head>
 <body>
-    <h2>行囊</h2>
+    <h2>行囊 & 状态</h2>
 
+    <!-- 基础属性 -->
     <div class="card">
-        <div class="weight-header">
-            <span>负重 (重装模式)</span>
-            <span style="color:#f85149">18.5 / 20 kg</span>
-        </div>
-        <div class="weight-track">
-            <div class="weight-fill"></div>
-        </div>
-        <div style="font-size:0.7rem; color:#f85149; margin-top:5px; text-align:right;">
-            <i class="fas fa-exclamation-triangle"></i> 体力消耗 +30%
+        <div style="font-size:0.8rem; color:#8b949e; margin-bottom:10px;">基础属性 (Attributes)</div>
+        <div class="attr-grid">
+            <div class="attr-box">
+                <div class="attr-val">12</div>
+                <div class="attr-label">体魄 (Physique)</div>
+            </div>
+            <div class="attr-box">
+                <div class="attr-val">09</div>
+                <div class="attr-label">灵巧 (Dexterity)</div>
+            </div>
+            <div class="attr-box">
+                <div class="attr-val">15</div>
+                <div class="attr-label">心相 (Psyche)</div>
+            </div>
         </div>
     </div>
 
+    <!-- 基因图谱 (Traits) -->
+    <div class="card">
+        <div style="font-size:0.8rem; color:#8b949e; margin-bottom:10px;">基因图谱 (Genetic Traits)</div>
+        <div>
+            <span class="trait-tag">勘探者 I</span>
+            <span class="trait-tag" style="background:#1f6feb">骆驼胃</span>
+        </div>
+        <div class="trait-desc">"你的方向感比常人敏锐，且在脱水状态下能坚持更久。"</div>
+    </div>
+
+    <!-- 背包 -->
+    <h3 style="margin: 15px 0 10px 0; font-size:1rem; color:#8b949e;">背负物资 (Loadout)</h3>
     <div class="grid">
-        <div class="slot item" onclick="alert('指南针：\n防止在大雾中迷路。')"><i class="fas fa-compass"></i></div>
-        <div class="slot item"><i class="fas fa-lungs" style="color:#58a6ff"></i><span class="count">x1</span></div>
-        <div class="slot item"><i class="fas fa-bread-slice" style="color:#d2a679"></i><span class="count">x3</span></div>
-        <div class="slot item"><i class="fas fa-fire-alt" style="color:#f85149"></i></div>
-        <div class="slot item"><i class="fas fa-snowflake" style="color:#fff"></i><span class="count">冰爪</span></div>
-        <div class="slot"></div>
+        <div class="slot item active" onclick="alert('指南针：\n防止在大雾中迷路。')"><i class="fas fa-compass"></i></div>
+        <div class="slot item"><i class="fas fa-tint" style="color:#58a6ff"></i><span class="count">x2</span></div>
+        <div class="slot item"><i class="fas fa-cookie" style="color:#d2a679"></i><span class="count">x3</span></div>
+        <div class="slot item"><i class="fas fa-fire" style="color:#f85149"></i><span class="count">x1</span></div>
+        <div class="slot item"><i class="fas fa-mountain" style="color:#fff"></i><span class="count">镐</span></div>
+        <div class="slot item"><i class="fas fa-medkit" style="color:#f85149"></i><span class="count">x1</span></div>
         <div class="slot"></div>
         <div class="slot"></div>
     </div>
 
-    <h3 style="margin-top:30px; font-size:1rem;">生存技能</h3>
-    <div class="card">
+    <!-- 技能 -->
+    <h3 style="margin: 25px 0 10px 0; font-size:1rem; color:#8b949e;">生存技能 (Skills)</h3>
+    <div class="card" style="padding-top:0; padding-bottom:0;">
         <div class="skill-row">
-            <span>定向 (Navigation)</span>
+            <div>
+                <div class="skill-name">搭建帐篷 (Camp)</div>
+                <div class="skill-desc">抗风效率 +20%</div>
+            </div>
             <span class="skill-val">Lv.3</span>
         </div>
         <div class="skill-row">
-            <span>生火 (Fire Making)</span>
+            <div>
+                <div class="skill-name">生火 (Fire)</div>
+                <div class="skill-desc">燃料消耗 -10%</div>
+            </div>
             <span class="skill-val">Lv.2</span>
         </div>
-        <div class="skill-row">
-            <span>急救 (First Aid)</span>
-            <span class="skill-val">Lv.1</span>
+        <div class="skill-row" style="border-bottom:none;">
+            <div>
+                <div class="skill-name">辨识方向 (Navi)</div>
+                <div class="skill-desc">迷路修正判定 +15%</div>
+            </div>
+            <span class="skill-val">Lv.4</span>
         </div>
     </div>
 </body>
