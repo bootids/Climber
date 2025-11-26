@@ -1,114 +1,213 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>SEDIMENT - GEAR</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        body { background-color: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif; padding: 20px; padding-bottom: 80px;}
-        h2 { font-size: 1.5rem; margin-bottom: 20px; text-transform: uppercase; }
-        
-        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
-        
-        /* 属性面板 */
-        .attr-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; }
-        .attr-box { background: #21262d; padding: 10px; border-radius: 8px; }
-        .attr-val { font-size: 1.2rem; font-weight: bold; color: #fff; font-family: 'Courier New'; }
-        .attr-label { font-size: 0.7rem; color: #8b949e; margin-top: 5px; }
-
-        /* 物品网格 */
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .slot {
-            aspect-ratio: 1; background: #21262d; border: 1px solid #30363d; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center; position: relative;
-            font-size: 1.2rem; color: #555;
+        .inventory-layout {
+            display: flex;
+            height: 100%;
+            padding: 60px 40px;
+            gap: 40px;
+            box-sizing: border-box;
         }
-        .slot.item { background: #161b22; color: #e6edf3; border-color: #6e7681; cursor: pointer; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-        .slot.active { border-color: #58a6ff; box-shadow: 0 0 5px rgba(88,166,255,0.5); }
-        .count { position: absolute; bottom: 2px; right: 4px; font-size: 0.6rem; font-family: 'Courier New'; color: #8b949e; background: rgba(0,0,0,0.6); padding: 0 2px; border-radius: 2px;}
-        
-        /* 技能列表 */
-        .skill-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #30363d; align-items: center; }
-        .skill-name { font-size: 0.9rem; font-weight: bold; }
-        .skill-desc { font-size: 0.7rem; color: #8b949e; }
-        .skill-val { font-family: 'Courier New'; color: #58a6ff; background: rgba(88,166,255,0.1); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; }
 
-        /* 基因天赋 */
-        .trait-tag { 
-            display: inline-block; font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; 
-            background: #238636; color: #fff; margin-right: 5px; margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.2);
+        .character-panel {
+            width: 30%;
+            border: 1px solid var(--secondary-color);
+            padding: 20px;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-        .trait-desc { font-size: 0.8rem; color: #8b949e; margin-top: 10px; font-style: italic; }
+
+        .gear-grid-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .grid-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--secondary-color);
+            padding-bottom: 5px;
+            font-family: var(--font-ui);
+        }
+
+        /* The Tetris Grid */
+        .gear-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr); /* 8 slots wide */
+            grid-template-rows: repeat(6, 60px);   /* 6 slots high */
+            gap: 2px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px solid var(--secondary-color);
+            position: relative;
+        }
+
+        /* Grid Background Cells */
+        .grid-cell-bg {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Items */
+        .item {
+            background: rgba(168, 216, 255, 0.1);
+            border: 1px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #fff;
+            position: relative;
+            cursor: grab;
+            transition: all 0.1s;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .item:hover {
+            background: rgba(168, 216, 255, 0.3);
+            box-shadow: 0 0 10px var(--primary-color);
+            z-index: 10;
+        }
+
+        /* Item Sizes */
+        .item.size-1x1 { grid-column: span 1; grid-row: span 1; }
+        .item.size-2x2 { grid-column: span 2; grid-row: span 2; }
+        .item.size-1x3 { grid-column: span 1; grid-row: span 3; }
+        .item.size-2x1 { grid-column: span 2; grid-row: span 1; }
+        .item.size-3x2 { grid-column: span 3; grid-row: span 2; }
+
+        .item-label {
+            position: absolute;
+            bottom: 2px; right: 2px;
+            font-size: 9px;
+            color: var(--primary-color);
+            font-family: var(--font-ui);
+        }
+
+        .weight-display {
+            text-align: right;
+            font-family: var(--font-ui);
+            font-size: 14px;
+            color: var(--warning-color);
+        }
+
+        h2 { margin: 0 0 10px 0; font-size: 1.2rem; border-bottom: 1px solid #333; padding-bottom: 5px; }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-family: var(--font-ui);
+            padding: 5px 0;
+            border-bottom: 1px dashed #333;
+        }
     </style>
 </head>
 <body>
-    <h2>行囊 & 状态</h2>
-
-    <!-- 基础属性 -->
-    <div class="card">
-        <div style="font-size:0.8rem; color:#8b949e; margin-bottom:10px;">基础属性 (Attributes)</div>
-        <div class="attr-grid">
-            <div class="attr-box">
-                <div class="attr-val">12</div>
-                <div class="attr-label">体魄 (Physique)</div>
-            </div>
-            <div class="attr-box">
-                <div class="attr-val">09</div>
-                <div class="attr-label">灵巧 (Dexterity)</div>
-            </div>
-            <div class="attr-box">
-                <div class="attr-val">15</div>
-                <div class="attr-label">心相 (Psyche)</div>
-            </div>
+    <div class="visor-container">
+        <div class="effects-layer">
+            <div class="scanlines"></div>
+            <div class="vignette"></div>
+            <div class="noise"></div>
         </div>
-    </div>
 
-    <!-- 基因图谱 (Traits) -->
-    <div class="card">
-        <div style="font-size:0.8rem; color:#8b949e; margin-bottom:10px;">基因图谱 (Genetic Traits)</div>
-        <div>
-            <span class="trait-tag">勘探者 I</span>
-            <span class="trait-tag" style="background:#1f6feb">骆驼胃</span>
-        </div>
-        <div class="trait-desc">"你的方向感比常人敏锐，且在脱水状态下能坚持更久。"</div>
-    </div>
+        <a href="index.html" class="btn-back btn-primary">&lt; BACK</a>
 
-    <!-- 背包 -->
-    <h3 style="margin: 15px 0 10px 0; font-size:1rem; color:#8b949e;">背负物资 (Loadout)</h3>
-    <div class="grid">
-        <div class="slot item active" onclick="alert('指南针：\n防止在大雾中迷路。')"><i class="fas fa-compass"></i></div>
-        <div class="slot item"><i class="fas fa-tint" style="color:#58a6ff"></i><span class="count">x2</span></div>
-        <div class="slot item"><i class="fas fa-cookie" style="color:#d2a679"></i><span class="count">x3</span></div>
-        <div class="slot item"><i class="fas fa-fire" style="color:#f85149"></i><span class="count">x1</span></div>
-        <div class="slot item"><i class="fas fa-mountain" style="color:#fff"></i><span class="count">镐</span></div>
-        <div class="slot item"><i class="fas fa-medkit" style="color:#f85149"></i><span class="count">x1</span></div>
-        <div class="slot"></div>
-        <div class="slot"></div>
-    </div>
+        <div class="inventory-layout">
+            
+            <!-- Stats Panel -->
+            <div class="character-panel">
+                <h2>MNEMO-FIXER STATUS</h2>
+                
+                <div class="stat-row">
+                    <span>CLASS</span>
+                    <span>NAVIGATOR</span>
+                </div>
+                <div class="stat-row">
+                    <span>PHYSIQUE</span>
+                    <span>LV.4</span>
+                </div>
+                <div class="stat-row">
+                    <span>DEXTERITY</span>
+                    <span>LV.2</span>
+                </div>
+                <div class="stat-row">
+                    <span>PSYCHE</span>
+                    <span>LV.6</span>
+                </div>
 
-    <!-- 技能 -->
-    <h3 style="margin: 25px 0 10px 0; font-size:1rem; color:#8b949e;">生存技能 (Skills)</h3>
-    <div class="card" style="padding-top:0; padding-bottom:0;">
-        <div class="skill-row">
-            <div>
-                <div class="skill-name">搭建帐篷 (Camp)</div>
-                <div class="skill-desc">抗风效率 +20%</div>
+                <br>
+                <h2>EQUIPPED</h2>
+                <div class="stat-row">
+                    <span>HEAD</span>
+                    <span>T2 SEARCHLIGHT</span>
+                </div>
+                <div class="stat-row">
+                    <span>BODY</span>
+                    <span>GORE-TEX SUIT</span>
+                </div>
+                <div class="stat-row">
+                    <span>TOOL</span>
+                    <span>ICE AXE</span>
+                </div>
             </div>
-            <span class="skill-val">Lv.3</span>
-        </div>
-        <div class="skill-row">
-            <div>
-                <div class="skill-name">生火 (Fire)</div>
-                <div class="skill-desc">燃料消耗 -10%</div>
+
+            <!-- Backpack Grid -->
+            <div class="gear-grid-container">
+                <div class="grid-header">
+                    <span>BACKPACK [Capacity: 48 Slots]</span>
+                    <span>KP: 1,250</span>
+                </div>
+
+                <div class="gear-grid">
+                    <!-- Generate background grid cells via script or just visually imply them -->
+                    <!-- Placed Items -->
+                    
+                    <!-- Medkit (2x2) -->
+                    <div class="item size-2x2" style="grid-column-start: 1; grid-row-start: 1;">
+                        MEDKIT
+                        <span class="item-label">2x2</span>
+                    </div>
+
+                    <!-- Oxygen (1x3) -->
+                    <div class="item size-1x3" style="grid-column-start: 3; grid-row-start: 1;">
+                        O2 TANK
+                        <span class="item-label">1x3</span>
+                    </div>
+
+                    <!-- Rations (1x1) -->
+                    <div class="item size-1x1" style="grid-column-start: 1; grid-row-start: 3;">
+                        FOOD
+                    </div>
+                    <div class="item size-1x1" style="grid-column-start: 2; grid-row-start: 3;">
+                        FOOD
+                    </div>
+
+                    <!-- Rope (2x1) -->
+                    <div class="item size-2x1" style="grid-column-start: 4; grid-row-start: 1;">
+                        ROPE 20m
+                    </div>
+
+                    <!-- Tent (3x2) -->
+                    <div class="item size-3x2" style="grid-column-start: 1; grid-row-start: 4;">
+                        TENT [PACKED]
+                        <span class="item-label">3x2</span>
+                    </div>
+
+                    <!-- Empty spaces imply available slots -->
+                </div>
+
+                <div class="weight-display">
+                    WEIGHT: 24.5kg / 30.0kg [HEAVY LOAD]
+                </div>
             </div>
-            <span class="skill-val">Lv.2</span>
-        </div>
-        <div class="skill-row" style="border-bottom:none;">
-            <div>
-                <div class="skill-name">辨识方向 (Navi)</div>
-                <div class="skill-desc">迷路修正判定 +15%</div>
-            </div>
-            <span class="skill-val">Lv.4</span>
         </div>
     </div>
 </body>

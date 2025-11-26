@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEDIMENT - ARCHIVE</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .archive-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .black-box-report {
+            width: 500px;
+            background: #fff;
+            color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 30px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+            transform: rotate(-1deg);
+            position: relative;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .black-box-report::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 10px;
+            background: repeating-linear-gradient(
+                45deg,
+                #000,
+                #000 10px,
+                #fff 10px,
+                #fff 20px
+            );
+        }
+
+        .report-header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+
+        .report-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .data-table td {
+            padding: 5px 0;
+            border-bottom: 1px dashed #ccc;
+        }
+        .label { font-weight: bold; }
+        .value { text-align: right; }
+
+        .cause-of-death {
+            border: 2px solid #000;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+
+        .inheritance-section {
+            margin-top: 20px;
+        }
+
+        .stamp {
+            position: absolute;
+            bottom: 50px;
+            right: 40px;
+            border: 3px solid #d00;
+            color: #d00;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 20px;
+            transform: rotate(-15deg);
+            opacity: 0.7;
+        }
+
+        .btn-container {
+            position: fixed;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            pointer-events: none; /* Let clicks pass through to buttons */
+        }
+        .btn-container a {
+            pointer-events: auto;
+            background: #000;
+            color: #fff;
+            border: 1px solid #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="visor-container">
+        <div class="effects-layer">
+            <div class="scanlines"></div>
+            <div class="vignette"></div>
+            <div class="noise"></div>
+        </div>
+
+        <a href="index.html" class="btn-back btn-primary">&lt; MAIN MENU</a>
+
+        <div class="archive-container">
+            <div class="black-box-report">
+                <div class="report-header">
+                    <div class="report-title">Mnemo-Fixer Casualty Report</div>
+                    <div>ID: 9527-ALPHA</div>
+                </div>
+
+                <table class="data-table">
+                    <tr>
+                        <td class="label">OPERATIVE</td>
+                        <td class="value">UNNAMED</td>
+                    </tr>
+                    <tr>
+                        <td class="label">START DATE</td>
+                        <td class="value">199X.11.10</td>
+                    </tr>
+                    <tr>
+                        <td class="label">END DATE</td>
+                        <td class="value">199X.11.24</td>
+                    </tr>
+                    <tr>
+                        <td class="label">DURATION</td>
+                        <td class="value">14 DAYS 03 HRS</td>
+                    </tr>
+                    <tr>
+                        <td class="label">FINAL ALTITUDE</td>
+                        <td class="value">3,420m</td>
+                    </tr>
+                    <tr>
+                        <td class="label">OFFSET</td>
+                        <td class="value">+120m (CRITICAL)</td>
+                    </tr>
+                </table>
+
+                <div class="cause-of-death">
+                    CAUSE OF TERMINATION:<br>
+                    HYPOTHERMIA (LEVEL 4)
+                </div>
+
+                <div class="inheritance-section">
+                    <strong>LEGACY DATA RECOVERED:</strong>
+                    <ul>
+                        <li>> Map Data (Sector 1-3) ........... [SAVED]</li>
+                        <li>> Genetic Traits .................. [LOST]</li>
+                        <li>> Inventory Items ................. [LOST]</li>
+                    </ul>
+                </div>
+
+                <p style="font-size: 10px; text-align: center; margin-top: 30px;">
+                    "The mountain keeps what it takes."
+                </p>
+
+                <div class="stamp">TERMINATED</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

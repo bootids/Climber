@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEDIMENT - HUD</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* HUD Specific Layout */
+        .hud-layout {
+            display: grid;
+            grid-template-rows: 40px 1fr 140px;
+            height: 100%;
+            width: 100%;
+            z-index: 10;
+        }
+
+        /* Header */
+        .hud-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            border-bottom: var(--glass-border);
+            background: rgba(0, 0, 0, 0.6);
+            font-family: var(--font-ui);
+            font-size: 14px;
+        }
+
+        .stat-item { display: flex; gap: 10px; align-items: center; }
+        .stat-label { color: var(--secondary-color); }
+        .stat-value { color: var(--primary-color); font-weight: bold; }
+        .stat-alert { color: var(--danger-color); animation: blink 1s infinite; }
+
+        /* Main Content */
+        .hud-main {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Log System */
+        .log-panel {
+            height: 40%;
+            padding: 20px;
+            overflow-y: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+            mask-image: linear-gradient(to top, black 80%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to top, black 80%, transparent 100%);
+        }
+
+        .log-entry {
+            font-size: 14px;
+            margin-bottom: 6px;
+            opacity: 0.7;
+            text-shadow: 0 0 2px rgba(0,0,0,1);
+        }
+        .log-entry.new { opacity: 1; color: #fff; font-weight: bold; }
+        .log-entry.danger { color: var(--danger-color); }
+
+        /* Visualizer / Radar Area */
+        .radar-panel {
+            flex-grow: 1;
+            position: relative;
+            border-top: var(--glass-border);
+            background: radial-gradient(circle at 50% 100%, rgba(168, 216, 255, 0.05), transparent 60%);
+        }
+
+        /* Simple Grid Animation for Movement */
+        .grid-anim {
+            position: absolute;
+            bottom: 0; left: 0; right: 0; top: 0;
+            background: 
+                linear-gradient(rgba(168, 216, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(168, 216, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg);
+            transform-origin: bottom center;
+            opacity: 0.3;
+            animation: scrollGrid 2s linear infinite;
+        }
+
+        @keyframes scrollGrid {
+            from { background-position: 0 0; }
+            to { background-position: 0 50px; }
+        }
+
+        .center-line {
+            position: absolute;
+            left: 50%; top: 0; bottom: 0;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-50%);
+        }
+
+        /* Footer / VTD */
+        .hud-footer {
+            background: rgba(5, 8, 10, 0.9);
+            border-top: var(--glass-border);
+            padding: 10px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .resources {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-family: var(--font-ui);
+        }
+
+        .bar-outer {
+            width: 200px;
+            height: 8px;
+            background: #222;
+            border: 1px solid #444;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        .bar-inner {
+            height: 100%;
+            background: #fff;
+            width: 80%;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        /* VTD Slider */
+        .vtd-wrapper {
+            position: relative;
+            height: 50px;
+            border: 1px solid var(--secondary-color);
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .vtd-ruler {
+            position: absolute;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+        .tick { width: 1px; height: 10px; background: var(--secondary-color); }
+        .tick.main { height: 20px; background: var(--primary-color); }
+
+        .vtd-pointer {
+            width: 0; height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 15px solid var(--primary-color);
+            position: absolute;
+            bottom: 0;
+            transform: translateX(0);
+            filter: drop-shadow(0 0 5px var(--primary-color));
+            transition: transform 0.1s ease-out;
+        }
+
+        .ghost-pointer {
+            width: 0; height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 12px solid rgba(255, 255, 255, 0.2);
+            position: absolute;
+            bottom: 0;
+            transform: translateX(40px);
+        }
+
+        @keyframes blink { 0% {opacity:1;} 50% {opacity:0.3;} 100% {opacity:1;} }
+    </style>
+</head>
+<body>
+    <div class="visor-container">
+        <!-- Effects -->
+        <div class="effects-layer">
+            <div class="scanlines"></div>
+            <div class="vignette"></div>
+            <div class="noise"></div>
+        </div>
+
+        <a href="index.html" class="btn-back btn-primary">&lt; ESC</a>
+
+        <div class="hud-layout">
+            <!-- Header -->
+            <div class="hud-header">
+                <div class="stat-item">
+                    <span class="stat-label">ALTITUDE</span>
+                    <span class="stat-value">2,450m</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">OFFSET</span>
+                    <span class="stat-value" id="offset-val">0.0m</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">SANITY</span>
+                    <span class="stat-value stat-alert">24%</span>
+                </div>
+            </div>
+
+            <!-- Main -->
+            <div class="hud-main">
+                <div class="log-panel" id="game-log">
+                    <div class="log-entry">> Environmental analysis complete.</div>
+                    <div class="log-entry">> Temperature: -14°C. Wind speed increasing.</div>
+                    <div class="log-entry danger">> WARNING: Unstable ground detected.</div>
+                    <div class="log-entry new">> "I think I see something in the fog..."</div>
+                </div>
+
+                <div class="radar-panel">
+                    <div class="grid-anim"></div>
+                    <div class="center-line"></div>
+                    <!-- Player marker would be conceptually in the center or slightly offset -->
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="hud-footer">
+                <div class="resources">
+                    <div>
+                        STAMINA 
+                        <div class="bar-outer"><div class="bar-inner" style="width: 65%; background: #7aff7a;"></div></div>
+                    </div>
+                    <div>
+                        KP: <span style="color: #ffd700;">850</span>
+                    </div>
+                </div>
+
+                <div class="vtd-wrapper" id="vtd-area">
+                    <div class="vtd-ruler">
+                        <div class="tick main"></div> <!-- -20 -->
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick main"></div> <!-- -10 -->
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick main"></div> <!-- 0 -->
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick main"></div> <!-- +10 -->
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick"></div>
+                        <div class="tick main"></div> <!-- +20 -->
+                    </div>
+                    <div class="ghost-pointer" id="ghost"></div>
+                    <div class="vtd-pointer" id="pointer"></div>
+                </div>
+                <div style="text-align: center; font-size: 10px; color: #555; font-family: var(--font-ui);">
+                    LINEAR VECTOR TRIM DIAL // MAN.ADJUST [MOUSE]
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple VTD Interaction
+        const pointer = document.getElementById('pointer');
+        const offsetVal = document.getElementById('offset-val');
+        let offset = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            const width = window.innerWidth;
+            const center = width / 2;
+            const dist = (e.clientX - center) / 5; // Sensitivity
+            offset = Math.max(-150, Math.min(150, dist));
+            
+            pointer.style.transform = `translateX(${offset}px)`;
+            offsetVal.innerText = (offset / 10).toFixed(1) + 'm';
+            
+            // Color change on danger
+            if (Math.abs(offset) > 100) {
+                offsetVal.style.color = 'var(--danger-color)';
+            } else {
+                offsetVal.style.color = 'var(--primary-color)';
+            }
+        });
+    </script>
+</body>
+</html>

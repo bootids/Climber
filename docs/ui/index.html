@@ -2,168 +2,74 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>The Climber - Prototype</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEDIMENT - Start</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root {
-            --bg-color: #0d1117;
-            --border-color: #30363d;
-            --accent: #58a6ff;
-            --text-sub: #8b949e;
-            --warning-red: #ff3333;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: #000; height: 100vh; display: flex; justify-content: center; overflow: hidden; font-family: -apple-system, sans-serif; }
-
-        .app-container {
-            width: 100%; max-width: 414px; height: 100%;
-            background-color: var(--bg-color);
-            position: relative; display: flex; flex-direction: column;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        .title-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            position: relative;
+            z-index: 10;
         }
 
-        /* iframe 容器：加载子页面 */
-        #content-frame {
-            flex: 1;
-            border: none;
-            width: 100%;
-            background: transparent;
+        .logo-large {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px var(--primary-color);
+            letter-spacing: 10px;
         }
 
-        /* 底部导航栏 */
-        .nav-bar {
-            height: 60px;
-            background: rgba(22, 27, 34, 0.95);
-            border-top: 1px solid var(--border-color);
-            display: flex; justify-content: space-around; align-items: center;
-            backdrop-filter: blur(10px);
-            z-index: 100;
-        }
-        .nav-item {
-            color: var(--text-sub);
-            font-size: 0.7rem;
-            display: flex; flex-direction: column; align-items: center; gap: 4px;
-            cursor: pointer; transition: color 0.2s; text-decoration: none;
-        }
-        .nav-item i { font-size: 1.2rem; }
-        .nav-item.active { color: #e6edf3; }
-        .nav-item.active i { color: var(--accent); }
-
-        /* 特殊：中间的“开始”按钮外观 */
-        .nav-item-play div {
-            width: 45px; height: 45px;
-            background: #e6edf3; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            margin-top: -20px;
-            border: 4px solid var(--bg-color);
-            box-shadow: 0 0 10px rgba(255,255,255,0.1);
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            margin-bottom: 60px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
         }
 
-        /* 启动警示弹窗 */
-        .modal-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 999;
-            display: flex; align-items: center; justify-content: center;
-            padding: 20px;
+        .version-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.8rem;
+            color: var(--secondary-color);
         }
-        .warning-box {
-            background: #161b22; border: 1px solid var(--warning-red);
-            padding: 25px; border-radius: 8px; text-align: center;
-            color: #e6edf3; box-shadow: 0 0 30px rgba(255,51,51,0.2);
-        }
-        .warning-icon { font-size: 3rem; color: var(--warning-red); margin-bottom: 15px; }
-        .warning-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; color: var(--warning-red); }
-        .warning-text {
-            font-size: 0.9rem; color: #8b949e; line-height: 1.5; margin-bottom: 20px;
-        }
-        .btn-agree {
-            background: var(--warning-red); color: #fff; border: none;
-            padding: 10px 30px; border-radius: 4px; font-weight: bold; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 1px;
+
+        .copyright {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-size: 0.8rem;
+            color: var(--secondary-color);
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        
-        <!-- 启动警示 (Safety Warning) -->
-        <div class="modal-overlay" id="safetyModal">
-            <div class="warning-box">
-                <div class="warning-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="warning-title">严禁模仿</div>
-                <div class="warning-text">
-                    本游戏涉及极端环境生存模拟.<br><br>
-                    请勿在现实中模仿游戏内的危险行为.<br>
-                    请勿前往未开发的野外区域.<br>
-                    生命只有一次，没有重开.
-                </div>
-                <button class="btn-agree" onclick="closeModal()">我已知晓</button>
-            </div>
+    <div class="visor-container">
+        <div class="effects-layer">
+            <div class="scanlines"></div>
+            <div class="vignette"></div>
+            <div class="noise"></div>
         </div>
 
-        <iframe id="content-frame" src="home.html"></iframe>
+        <div class="title-screen">
+            <div class="logo-large">SEDIMENT</div>
+            <div class="subtitle">沉积年代</div>
 
-        <nav class="nav-bar">
-            <a class="nav-item active" onclick="navigate('home.html', this)">
-                <i class="fas fa-campground"></i>
-                <span>量子营地</span>
-            </a>
-            <a class="nav-item" onclick="navigate('inventory.html', this)">
-                <i class="fas fa-box-open"></i>
-                <span>行囊</span>
-            </a>
-            <a class="nav-item nav-item-play" onclick="navigate('game.html', this)">
-                <div><i class="fas fa-play" style="color:#000; margin-left:3px;"></i></div>
-            </a>
-            <a class="nav-item" onclick="navigate('radio.html', this)">
-                <i class="fas fa-broadcast-tower"></i>
-                <span>频段</span>
-            </a>
-            <a class="nav-item" onclick="alert('系统日志：\n当前版本 v1.0 Prototype')">
-                <i class="fas fa-terminal"></i>
-                <span>系统</span>
-            </a>
-        </nav>
+            <nav class="nav-menu">
+                <a href="hud.html" class="btn-primary">开始攀登 (START)</a>
+                <a href="inventory.html" class="btn-primary">装备管理 (GEAR)</a>
+                <a href="legacy.html" class="btn-primary">档案馆 (ARCHIVE)</a>
+                <button class="btn-primary" style="border-color: var(--secondary-color); color: var(--secondary-color);">设置 (SETTINGS)</button>
+            </nav>
+        </div>
+
+        <div class="version-info">SYS.VER 2.0.4 // CONNECTED</div>
+        <div class="copyright">© MNEMO-ARCHIVE DIVISION</div>
     </div>
-
-    <script>
-        function navigate(url, el) {
-            const contentFrame = document.getElementById('content-frame');
-            contentFrame.src = url;
-            
-            const navBar = document.querySelector('.nav-bar');
-            
-            if (url === 'game.html') {
-                navBar.style.display = 'none';
-            } else {
-                navBar.style.display = 'flex';
-            }
-
-            // 更新选中状态
-            if (el) {
-                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-                if(el.classList.contains('nav-item-play')) {
-                    // 中间按钮不需要active态
-                } else {
-                    el.classList.add('active');
-                }
-            }
-        }
-
-        // 暴露给子页面调用的方法
-        window.restoreNav = function() {
-            const navBar = document.querySelector('.nav-bar');
-            navBar.style.display = 'flex';
-            // 默认切回主页
-            navigate('home.html', document.querySelector('.nav-item'));
-        };
-
-        function closeModal() {
-            const modal = document.getElementById('safetyModal');
-            modal.style.opacity = '0';
-            setTimeout(() => modal.remove(), 500);
-        }
-    </script>
 </body>
 </html>
